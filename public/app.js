@@ -213,6 +213,126 @@ function renderChangelog(changelog) {
   });
 }
 
+// The changelog above is the revise agent's *claim* about what it changed;
+// this renders the actual before/after text for the fields that really did
+// change between rounds, computed client-side from the architecture snapshot
+// the backend now keeps per round (review.architecture_history).
+const DIFF_TEXT_FIELDS = [
+  ["infrastructure", "Infrastructure"],
+  ["security_controls.threat_model_summary", "Threat model"],
+  ["security_controls.authentication", "Authentication"],
+  ["security_controls.authorization", "Authorization"],
+  ["security_controls.iam", "IAM"],
+  ["security_controls.network_boundaries", "Network boundaries"],
+  ["security_controls.secrets_and_encryption", "Secrets & encryption"],
+  ["security_controls.abuse_prevention", "Abuse prevention"],
+  ["security_controls.input_validation", "Input validation"],
+  ["reliability_design.scaling_strategy", "Scaling strategy"],
+  ["reliability_design.reliability", "Reliability"],
+  ["reliability_design.disaster_recovery", "Disaster recovery"],
+  ["reliability_design.observability", "Observability"],
+];
+
+function _getPath(obj, path) {
+  return path.split(".").reduce((o, k) => (o ? o[k] : undefined), obj);
+}
+
+// Array fields worth a real per-entry diff, not just a count - keyed by a
+// stable id/name so an entry that only got its text edited (not added or
+// removed) still shows up as a change, matched to its own before/after.
+const DIFF_ARRAY_FIELDS = [
+  ["components", "name", (c) => c.description, "Component"],
+  ["decisions", "id", (d) => `${d.decision}\n\nTrade-offs: ${d.trade_offs}\n\nRationale: ${d.rationale}`, "Decision"],
+];
+
+function _diffKeyedArray(beforeArr, afterArr, keyField, textFn) {
+  const beforeMap = new Map((beforeArr || []).map((x) => [x[keyField], x]));
+  const afterMap = new Map((afterArr || []).map((x) => [x[keyField], x]));
+  const keys = new Set([...beforeMap.keys(), ...afterMap.keys()]);
+  const entries = [];
+  keys.forEach((key) => {
+    const b = beforeMap.get(key);
+    const a = afterMap.get(key);
+    const bText = b ? textFn(b) : null;
+    const aText = a ? textFn(a) : null;
+    if (bText !== aText) entries.push({ key, before: bText, after: aText });
+  });
+  return entries;
+}
+
+function _appendDiffBlock(el, label, beforeText, afterText) {
+  const wrap = document.createElement("div");
+  wrap.className = "diff-field";
+  const labelEl = document.createElement("div");
+  labelEl.className = "diff-field-label";
+  labelEl.textContent = label;
+  wrap.appendChild(labelEl);
+
+  const grid = document.createElement("div");
+  grid.className = "diff-before-after";
+  const beforeEl = document.createElement("div");
+  beforeEl.className = "diff-before";
+  beforeEl.textContent = beforeText || "(not present before this round)";
+  const afterEl = document.createElement("div");
+  afterEl.className = "diff-after";
+  afterEl.textContent = afterText || "(removed this round)";
+  grid.appendChild(beforeEl);
+  grid.appendChild(afterEl);
+  wrap.appendChild(grid);
+  el.appendChild(wrap);
+}
+
+function renderRevisionDiff(architectureHistory) {
+  const el = $("revisionDiff");
+  el.innerHTML = "";
+  if (!architectureHistory || architectureHistory.length < 2) {
+    el.hidden = true;
+    return;
+  }
+
+  for (let i = 1; i < architectureHistory.length; i++) {
+    const before = architectureHistory[i - 1];
+    const after = architectureHistory[i];
+
+    const changedFields = DIFF_TEXT_FIELDS.filter(
+      ([path]) => _getPath(before, path) !== _getPath(after, path)
+    );
+    const arrayDiffs = DIFF_ARRAY_FIELDS.map(([key, keyField, textFn, label]) => ({
+      label,
+      entries: _diffKeyedArray(before[key], after[key], keyField, textFn),
+    })).filter((d) => d.entries.length > 0);
+    const countOnlyChanges = ["data_models", "apis"]
+      .filter((key) => JSON.stringify(before[key] || []) !== JSON.stringify(after[key] || []))
+      .map((key) => `${key} (${(before[key] || []).length} → ${(after[key] || []).length} entries)`);
+
+    if (changedFields.length === 0 && arrayDiffs.length === 0 && countOnlyChanges.length === 0) continue;
+
+    const heading = document.createElement("h4");
+    heading.textContent = `Round ${i} — before → after`;
+    el.appendChild(heading);
+
+    if (countOnlyChanges.length > 0) {
+      const note = document.createElement("p");
+      note.className = "diff-field-label";
+      note.style.marginBottom = "10px";
+      note.textContent = `Also changed: ${countOnlyChanges.join(", ")}`;
+      el.appendChild(note);
+    }
+
+    changedFields.forEach(([path, label]) => {
+      _appendDiffBlock(el, label, _getPath(before, path), _getPath(after, path));
+    });
+
+    arrayDiffs.forEach(({ label, entries }) => {
+      entries.forEach(({ key, before: b, after: a }) => {
+        _appendDiffBlock(el, `${label}: ${key}`, b, a);
+      });
+    });
+  }
+
+  el.hidden = !el.hasChildNodes();
+}
+
 // Draws a simple left-to-right chain of boxes from a component list — the same
 // visual grammar as the hero schematic, applied to whatever came out of the run.
 function renderSchematic(svgEl, components) {
@@ -342,8 +462,10 @@ function renderResult(result) {
   renderArchStages(result.architecture_stages, $("stage").value);
   renderReview(result.review);
   renderChangelog(result.review.changelog);
+  renderRevisionDiff(result.review.architecture_history);
   renderBlueprint(result.blueprint);
   renderValidation(result.validation);
+  $("refineBtn").disabled = false;
 }
 
 function setBanner(text, isError) {
@@ -494,6 +616,13 @@ async function loadProjects() {
 
       const ideaTd = document.createElement("td");
       ideaTd.textContent = p.idea.length > 70 ? p.idea.slice(0, 68) + "…" : p.idea;
+      if (p.refined_from) {
+        const tag = document.createElement("span");
+        tag.className = "id-badge";
+        tag.style.marginLeft = "8px";
+        tag.textContent = "refined";
+        ideaTd.appendChild(tag);
+      }
       tr.appendChild(ideaTd);
 
       const providerTd = document.createElement("td");
@@ -539,6 +668,53 @@ async function viewProject(projectId) {
     $("output").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
     setBanner(`Couldn't load that project: ${err.message}`, true);
+  }
+}
+
+async function refineProject() {
+  if (!lastResult || !lastResult.id) return;
+  const notes = $("refineNotes").value.trim();
+  const errorEl = $("refineError");
+  const btn = $("refineBtn");
+  errorEl.hidden = true;
+
+  if (!notes) {
+    errorEl.textContent = "Add a note describing what should change.";
+    errorEl.hidden = false;
+    return;
+  }
+
+  const provider = $("providerSelect").value;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Refining… (re-runs review + compile, similar time to a generation)";
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/projects/${lastResult.id}/refine`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes, provider }),
+    });
+    const payload = await res.json().catch(() => null);
+    if (!res.ok) {
+      const detail = payload && payload.detail ? payload.detail : `HTTP ${res.status}`;
+      throw new Error(detail);
+    }
+
+    lastResult = payload;
+    $("downloadJson").disabled = false;
+    $("downloadBlueprint").disabled = false;
+    setBanner(`Refined into project ${payload.id.slice(0, 8)} based on your notes.`);
+    renderResult(payload);
+    $("refineNotes").value = "";
+    loadProjects();
+    $("output").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    errorEl.textContent = `Refine failed: ${err.message}`;
+    errorEl.hidden = false;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 }
 
@@ -614,6 +790,8 @@ function init() {
     if (!validateForm()) return;
     runGenerate(readBrief());
   });
+
+  $("refineBtn").addEventListener("click", refineProject);
 
   loadHealth();
   loadProjects();

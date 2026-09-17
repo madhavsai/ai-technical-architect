@@ -698,6 +698,71 @@ select option {
   border-top: 1px solid var(--rule);
 }
 
+.revision-diff {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+}
+
+.revision-diff h4 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--ink-dim);
+}
+
+.diff-field {
+  margin-bottom: 14px;
+}
+
+.diff-field-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.diff-before-after {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .diff-before-after {
+    grid-template-columns: 1fr;
+  }
+}
+
+.diff-before, .diff-after {
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.diff-before {
+  color: var(--ink-faint);
+  background: rgba(200, 60, 60, 0.05);
+  border-color: rgba(200, 60, 60, 0.25);
+}
+
+.diff-after {
+  color: var(--ink);
+  background: rgba(80, 160, 90, 0.06);
+  border-color: rgba(80, 160, 90, 0.3);
+}
+
+.refine-notes {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  padding: 10px 12px;
+  min-height: 84px;
+}
+
 .changelog h4 {
   font-size: 13px;
   font-weight: 600;

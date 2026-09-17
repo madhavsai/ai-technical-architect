@@ -71,6 +71,7 @@ def list_projects(limit: int = 100) -> list[dict]:
                 "created_at": created_at,
                 "provider": provider,
                 "idea": brief.get("idea", ""),
+                "refined_from": brief.get("refined_from"),
             }
         )
     return projects
@@ -85,3 +86,17 @@ def get_project(project_id: str) -> dict | None:
         return None
     provider, result_json = row
     return {"id": project_id, "provider": provider, **json.loads(result_json)}
+
+
+def get_project_brief(project_id: str) -> dict | None:
+    """The original brief a project was generated from - not part of the
+    normal get_project() response (that returns the pipeline *result*), but
+    needed by /refine to reconstruct the same pipeline context (requirements/
+    architecture prompts all take the raw brief, not just the result)."""
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT brief_json FROM projects WHERE id = ?", (project_id,)
+        ).fetchone()
+    if row is None:
+        return None
+    return json.loads(row[0])

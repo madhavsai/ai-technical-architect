@@ -354,6 +354,45 @@ and Razorpay payment code — this phase adapts that rather than building it fro
       and by running the actual shipped `app.js` in a sandboxed DOM against the live
       server (no browser-automation tool was available this session) — `loadProjects()`
       and `viewProject()` both execute cleanly end-to-end with zero errors.
+- [x] **Human-facing refine action + revision diff view, 2026-09-17** — per an external
+      product-management review's top recommendation (close the "no reaction to output"
+      core-loop gap before anything else): `POST /api/projects/{id}/refine` takes a saved
+      project + free-text human notes, reuses `run_architect_revise` unchanged (the notes
+      are framed as a single `human_reviewer` finding in the same shape the automated
+      agents already produce), then re-runs the same tail a fresh generation gets
+      (review, alternatives, blueprint compile, validation) so a refined result is exactly
+      as complete as a new one - saved as a new, linked project (`refined_from` in the
+      brief), not an in-place overwrite. `backend/pipeline.py` refactored to share this
+      tail (`_assemble_result`) between `run_pipeline` and `run_refine` rather than
+      duplicating the ~40-line blueprint-assembly block.
+      Paired with a real before/after diff view (`review.architecture_history`, a
+      snapshot per revision round, not just the changelog's claims about what changed) -
+      renders per-field and per-component/per-decision text diffs client-side.
+      **Real bug caught by this on its first live test**: refining the multi-tenant
+      voice-agent project with "add replay-attack protection to the API key auth" produced
+      a changelog claiming the fix landed in `security_controls.authentication`, but the
+      diff view showed every `security_controls` field byte-identical before/after - the
+      mechanism actually landed as an appended sentence in `components["Gateway
+      Service"].description` instead, a real violation of the architect_revise prompt's
+      own scope rule ("keep auth/IAM/secrets inside security_controls... rather than
+      leaking into the core fields"). Confirms exactly the kind of gap this feature exists
+      to surface — not a plumbing bug in this new code, a real, live instance of the
+      changelog-not-verified issue flagged during the earlier adversarial-findings prompt
+      audit. Verified end-to-end: real refine call against the live backend + Ollama
+      (HTTP 200, correct lineage, correct changelog), plus the actual shipped `app.js` run
+      in a sandboxed DOM against the live server confirming `renderRevisionDiff()` and
+      `refineProject()` both execute cleanly with the right rendered output.
+- [ ] Reliability arithmetic self-contradiction fix, 2026-09-17 — `reliability_architect.txt`
+      and `reliability_review.txt` no longer ask the LLM to freehand RTO-vs-availability-
+      budget arithmetic; that comparison is deferred to Phase 5's deterministic check
+      (which already computes it correctly). Root cause: on a real saved run, the final
+      review flagged a 5-minute RTO as `critical` ("consumes 6.25% of the annual budget"),
+      while the deterministic check on the same run correctly passed it - and round 2's
+      revise had already moved the RTO 2min→5min specifically to satisfy an *earlier*
+      round's version of the same wrong finding. Both prompts now only judge what a
+      numeric check can't: DR-tier-vs-RTO consistency and whether the recovery sequence
+      actually plausibly achieves the stated number. **Not yet re-verified against a live
+      run** - the fix is in prompt files, restart-tested for import errors only.
 - [ ] Phase 6 remainder — auth, billing, collaboration ← **next, if resumed**
 - [ ] Optional, discussed but not scheduled: live research step (self-hosted SearXNG +
       an Ollama tool-calling loop, zero API keys) feeding grounded current-info context

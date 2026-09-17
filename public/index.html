@@ -261,6 +261,7 @@
         </div>
         <p class="revision-status" id="revisionStatus"></p>
         <div class="changelog" id="revisionChangelog" hidden></div>
+        <div class="revision-diff" id="revisionDiff" hidden></div>
       </div>
 
       <div class="phase-card">
@@ -293,6 +294,24 @@
         another model's opinion. Knowledge-retrieval grounding (source-cited references) is parked
         for later — this is the deterministic half only.</p>
         <ul class="check-list" id="validationList"></ul>
+      </div>
+
+      <div class="phase-card" id="refineCard">
+        <div class="phase-card-head">
+          <span class="phase-num">Phase 6</span>
+          <h3>Refine this blueprint</h3>
+          <span class="pill pill-live">Live</span>
+        </div>
+        <p class="preview-note" style="margin-bottom:16px;">Disagree with a finding, or want to push the
+        design further? Add a note and re-run the Architect against it — reuses the same revision
+        machinery the automated review uses, then re-reviews and re-compiles the blueprint as a new,
+        linked project in your history below.</p>
+        <textarea id="refineNotes" class="refine-notes" rows="4"
+          placeholder="e.g. &quot;Use AWS instead of Azure&quot; or &quot;the rate limiting design still doesn't cover per-session limits — fix that.&quot;"></textarea>
+        <p class="form-error" id="refineError" hidden></p>
+        <div class="export-row" style="margin-top:12px;">
+          <button type="button" class="btn btn-primary" id="refineBtn" disabled>Refine blueprint</button>
+        </div>
       </div>
     </div>
   </section>

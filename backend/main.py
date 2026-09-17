@@ -20,7 +20,7 @@ from pydantic import BaseModel  # noqa: E402
 
 import db  # noqa: E402
 import providers  # noqa: E402
-from pipeline import run_pipeline  # noqa: E402
+from pipeline import run_pipeline, run_refine  # noqa: E402
 
 DEFAULT_PROVIDER = os.environ.get("LLM_PROVIDER", "gemini").strip().lower()
 
@@ -49,6 +49,14 @@ class BriefRequest(BaseModel):
     constraints: str = ""
     stage: str = ""  # "", "mvp", "growth", or "large_scale" - "" means let the Architect infer it
     provider: str | None = None
+
+
+class RefineRequest(BaseModel):
+    notes: str
+    provider: str | None = None
+
+
+_REVIEW_AGENT_KEYS = ("security", "cost", "reliability", "critic")
 
 
 @app.get("/api/health")
@@ -111,3 +119,37 @@ def get_project(project_id: str):
     if project is None:
         raise HTTPException(404, "no project with that id")
     return project
+
+
+@app.post("/api/projects/{project_id}/refine")
+def refine_project(project_id: str, req: RefineRequest):
+    if not req.notes.strip():
+        raise HTTPException(400, "notes are required")
+
+    project = db.get_project(project_id)
+    brief = db.get_project_brief(project_id)
+    if project is None or brief is None:
+        raise HTTPException(404, "no project with that id")
+
+    provider = (req.provider or project.get("provider") or DEFAULT_PROVIDER).strip().lower()
+    if provider not in ("gemini", "ollama"):
+        raise HTTPException(400, f"unknown provider: {provider}")
+
+    is_available = providers.gemini_available() if provider == "gemini" else providers.ollama_available()
+    if not is_available:
+        raise HTTPException(409, f"{provider} isn't configured — check /api/health")
+
+    review_round = {k: project["review"][k] for k in _REVIEW_AGENT_KEYS}
+
+    try:
+        result = run_refine(
+            brief, project["requirements"], project["architecture"], review_round, req.notes.strip(), provider
+        )
+    except Exception as e:
+        raise HTTPException(502, str(e)) from e
+
+    new_id = str(uuid.uuid4())
+    new_brief = {**brief, "refined_from": project_id, "refine_notes": req.notes.strip()}
+    db.save_project(new_id, provider, new_brief, result)
+
+    return {"id": new_id, "provider": provider, "refined_from": project_id, **result}
