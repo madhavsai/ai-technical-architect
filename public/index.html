@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Technical Architect</title>
+<meta name="description" content="Describe what you want to build. Get a technical blueprint — requirements, architecture, APIs and database design — reviewed before you write a line of code." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<!-- Loaded non-blocking: a slow/unreachable font CDN must never delay app.js
+     (the provider health-check that runs on load) or hold up page rendering. -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+<noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" /></noscript>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<main class="sheet">
+
+  <div class="titleblock-row">
+    <div class="wordmark"><strong>AI Technical Architect</strong></div>
+    <dl class="titleblock">
+      <dt>Phase</dt><dd>5 — Validation</dd>
+      <dt>Status</dt><dd id="backendStatus">Checking backend…</dd>
+      <dt>Rev</dt><dd id="revDate">—</dd>
+    </dl>
+  </div>
+
+  <section class="hero">
+    <h1>Describe what you want to build. Get the blueprint first.</h1>
+    <p>Give it a product idea and real constraints — users, traffic, budget, an
+    availability target. It comes back with a full technical blueprint: requirements,
+    architecture, a dedicated security and reliability design, an independent
+    multi-agent review with a revision loop, staged MVP-to-scale alternatives, and a
+    compiled risk register and roadmap.</p>
+
+    <svg class="schematic" viewBox="0 0 760 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram: a client connects through an API to services, which write to a data store">
+      <line class="line draw" x1="110" y1="80" x2="230" y2="80" style="animation-delay:.1s" />
+      <line class="line draw" x1="340" y1="80" x2="460" y2="80" style="animation-delay:.4s" />
+      <line class="line draw" x1="570" y1="80" x2="650" y2="80" style="animation-delay:.7s" />
+
+      <rect class="box draw-box" x="20" y="50" width="90" height="60" style="animation-delay:0s" />
+      <text x="65" y="84" text-anchor="middle">CLIENT</text>
+
+      <rect class="box draw-box" x="230" y="50" width="110" height="60" style="animation-delay:.3s" />
+      <text x="285" y="84" text-anchor="middle">API</text>
+
+      <rect class="box draw-box" x="460" y="35" width="110" height="90" style="animation-delay:.6s" />
+      <text x="515" y="84" text-anchor="middle">SERVICES</text>
+
+      <rect class="box draw-box" x="650" y="50" width="90" height="60" style="animation-delay:.9s" />
+      <text x="695" y="84" text-anchor="middle">DATA</text>
+    </svg>
+  </section>
+
+  <section class="spec-sheet" aria-labelledby="briefHeading">
+    <div class="section-head" style="padding:20px 20px 0">
+      <h2 id="briefHeading">Project brief</h2>
+      <span class="hint">8 fields</span>
+    </div>
+
+    <form id="briefForm" novalidate>
+      <div class="field-row">
+        <label for="idea">Product idea</label>
+        <div class="field-control">
+          <textarea id="idea" name="idea" placeholder="What are you building, and for whom?" required></textarea>
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="users">Target users</label>
+        <div class="field-control">
+          <input type="text" id="users" name="users" placeholder="e.g. small clinics and service businesses" />
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="traffic">Expected users / traffic</label>
+        <div class="field-control">
+          <input type="text" id="traffic" name="traffic" placeholder="e.g. 100,000 monthly active users" />
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="budget">Budget</label>
+        <div class="field-control">
+          <input type="text" id="budget" name="budget" placeholder="e.g. ₹25,000/month" />
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="availability">Availability target</label>
+        <div class="field-control">
+          <input type="text" id="availability" name="availability" placeholder="e.g. 99.9%" />
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="cloud">Cloud preference</label>
+        <div class="field-control">
+          <select id="cloud" name="cloud">
+            <option value="">No preference</option>
+            <option value="aws">AWS</option>
+            <option value="azure">Azure</option>
+            <option value="gcp">Google Cloud</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="stage">Target stage</label>
+        <div class="field-control">
+          <select id="stage" name="stage">
+            <option value="">Auto — let the Architect infer it</option>
+            <option value="mvp">MVP — simple, low cost, validate quickly</option>
+            <option value="growth">Growth — scaling, caching, queues, replicas</option>
+            <option value="large_scale">Large scale — specialized, partitioned, regional</option>
+          </select>
+          <span class="field-hint">Overrides what the Architect would otherwise infer from traffic/budget — forces the design (and its alternatives) to target this stage specifically.</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="constraints">Special constraints</label>
+        <div class="field-control">
+          <textarea id="constraints" name="constraints" placeholder="Optional — anything the design has to respect"></textarea>
+        </div>
+      </div>
+
+      <p class="form-error" id="formError" hidden></p>
+
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" id="loadExample">Load example brief</button>
+        <div class="generate-group">
+          <select id="providerSelect" aria-label="Generation provider"></select>
+          <button type="submit" class="btn btn-primary" id="generateBtn">Generate blueprint</button>
+        </div>
+      </div>
+      <p class="provider-status" id="providerStatus" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section class="output" id="output" aria-labelledby="outputHeading">
+    <div class="demo-banner" id="resultBanner"></div>
+
+    <div class="progress-line" id="progressLine" hidden></div>
+
+    <div id="outputBody" hidden>
+      <div class="output-grid">
+        <div class="output-panel">
+          <h3>Requirements</h3>
+          <div class="output-block">
+            <h4>Product understanding</h4>
+            <p id="reqProductUnderstanding" style="color:var(--ink-dim); font-size:14px; margin:0;"></p>
+          </div>
+          <div class="output-block">
+            <h4>Users &amp; use cases</h4>
+            <ul id="reqUseCases"></ul>
+          </div>
+          <div class="output-block">
+            <h4>Functional</h4>
+            <ul id="reqFunctional"></ul>
+          </div>
+          <div class="output-block">
+            <h4>Non-functional</h4>
+            <ul id="reqNonFunctional"></ul>
+          </div>
+          <div class="output-block">
+            <h4>Assumptions</h4>
+            <ul id="reqAssumptions"></ul>
+          </div>
+          <div class="output-block">
+            <h4>Open questions</h4>
+            <ul id="reqOpenQuestions"></ul>
+          </div>
+        </div>
+
+        <div class="output-panel">
+          <h3>Architecture</h3>
+          <div class="output-block">
+            <h4>Components</h4>
+            <ul id="archComponents"></ul>
+          </div>
+          <div class="output-block">
+            <h4>API design</h4>
+            <ul class="api-list" id="archApis"></ul>
+          </div>
+          <div class="output-block">
+            <h4>Data models</h4>
+            <div id="archDataModels"></div>
+          </div>
+          <div class="output-block">
+            <h4>Infrastructure</h4>
+            <p id="archInfra" style="color:var(--ink-dim); font-size:14px; margin:0;"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="output-schematic-wrap">
+        <div class="section-head">
+          <h2 id="outputHeading" style="font-size:18px;">Rendered architecture</h2>
+        </div>
+        <svg id="outputSchematic" class="schematic" viewBox="0 0 760 140" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+
+      <div class="section-head">
+        <h2 style="font-size:18px;">Architecture decisions</h2>
+        <button type="button" class="btn btn-ghost" id="downloadJson" disabled>Download JSON</button>
+      </div>
+      <div id="archDecisions" style="margin-bottom:24px;"></div>
+
+      <div class="phase-card">
+        <div class="phase-card-head">
+          <span class="phase-num">Phase 2</span>
+          <h3>Security &amp; reliability design</h3>
+          <span class="pill pill-live">Live</span>
+        </div>
+        <div class="review-grid">
+          <div class="review-agent">
+            <h4>Security controls</h4>
+            <dl class="spec-list" id="securityControls"></dl>
+          </div>
+          <div class="review-agent">
+            <h4>Reliability design</h4>
+            <dl class="spec-list" id="reliabilityDesign"></dl>
+            <ul class="finding-list" id="failureScenarios" style="margin-top:10px;"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-card-head">
+          <span class="phase-num">§6</span>
+          <h3>Architecture alternatives</h3>
+          <span class="pill pill-live">Live</span>
+        </div>
+        <table class="project-table" id="archStagesTable">
+          <thead><tr><th>Stage</th><th>Characteristics</th><th>Purpose</th><th>Transition trigger</th></tr></thead>
+          <tbody id="archStagesBody"></tbody>
+        </table>
+      </div>
+
+      <div class="phase-card" id="reviewCard">
+        <div class="phase-card-head">
+          <span class="phase-num">Phase 3</span>
+          <h3>Multi-agent review</h3>
+          <span class="pill pill-live">Live</span>
+        </div>
+        <div class="review-grid">
+          <div class="review-agent">
+            <h4>Security</h4>
+            <ul class="finding-list" id="reviewSecurity"></ul>
+          </div>
+          <div class="review-agent">
+            <h4>Cost <span id="costBudgetTag"></span></h4>
+            <p class="cost-summary" id="costSummary"></p>
+            <ul class="finding-list" id="reviewCost"></ul>
+          </div>
+          <div class="review-agent">
+            <h4>Reliability</h4>
+            <ul class="finding-list" id="reviewReliability"></ul>
+          </div>
+          <div class="review-agent">
+            <h4>Architecture Critic</h4>
+            <ul class="finding-list" id="reviewCritic"></ul>
+          </div>
+        </div>
+        <p class="revision-status" id="revisionStatus"></p>
+        <div class="changelog" id="revisionChangelog" hidden></div>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-card-head">
+          <span class="phase-num">Phase 4</span>
+          <h3>Blueprint — risks &amp; roadmap</h3>
+          <span class="pill pill-live">Live</span>
+        </div>
+        <div class="output-block">
+          <h4>Risk register</h4>
+          <ul class="finding-list" id="blueprintRisks"></ul>
+        </div>
+        <div class="output-block">
+          <h4>Implementation roadmap</h4>
+          <ol id="blueprintRoadmap"></ol>
+        </div>
+        <div class="export-row">
+          <button type="button" class="btn btn-ghost" id="downloadBlueprint" disabled>Download blueprint JSON</button>
+        </div>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-card-head">
+          <span class="phase-num">Phase 5</span>
+          <h3>Deterministic validation</h3>
+          <span class="pill pill-live">Live</span>
+        </div>
+        <p class="preview-note" style="margin-bottom:16px;">An LLM isn't the final authority here —
+        these checks are arithmetic and pattern-matching against the generated blueprint, not
+        another model's opinion. Knowledge-retrieval grounding (source-cited references) is parked
+        for later — this is the deterministic half only.</p>
+        <ul class="check-list" id="validationList"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="projects-section" aria-labelledby="projectsHeading">
+    <div class="section-head">
+      <h2 id="projectsHeading">Your projects</h2>
+      <span class="pill pill-live">Live</span>
+    </div>
+    <p class="preview-note">Every generation is saved automatically. Click one to load its
+    full result above — auth/billing/collaboration (the rest of Phase 6) aren't built,
+    so this is everyone's shared local history, not per-account.</p>
+    <table class="project-table">
+      <thead><tr><th>Project</th><th>Provider</th><th>Date</th><th></th></tr></thead>
+      <tbody id="projectsBody"></tbody>
+    </table>
+    <p class="preview-note" id="projectsEmpty" hidden>No generations yet — fill in the brief above and click "Generate blueprint."</p>
+  </section>
+
+  <footer class="sheet-footer">
+    Phases 1–5 are live (Phase 5's deterministic half only — knowledge retrieval is
+    parked). Phase 6's project history is live; auth/billing/collaboration aren't built —
+    see BUILD_PLAN.md for the full roadmap. No data leaves this page except to the
+    local backend at 127.0.0.1:8070.
+  </footer>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

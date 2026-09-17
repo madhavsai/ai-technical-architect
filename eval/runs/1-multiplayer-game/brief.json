@@ -1,0 +1,10 @@
+{
+  "idea": "A backend for a real-time multiplayer battle-royale game. 100 players per match, authoritative server simulation, must feel responsive worldwide.",
+  "users": "Players (mobile + PC), game studio ops",
+  "traffic": "50,000 concurrent matches at peak",
+  "budget": "$80,000/month",
+  "availability": "99.95%",
+  "cloud": "",
+  "constraints": "Server-authoritative (no client trust, no cheating); sub-100ms perceived input latency worldwide",
+  "provider": "ollama"
+}

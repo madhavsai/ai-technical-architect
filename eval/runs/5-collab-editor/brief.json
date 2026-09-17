@@ -1,0 +1,10 @@
+{
+  "idea": "A collaborative document editor - many users edit the same document simultaneously and see each other's changes live, must work with brief network drops (edits queue and reconcile on reconnect).",
+  "users": "Teams co-editing documents",
+  "traffic": "500,000 documents with active concurrent editors, up to 50 simultaneous editors per document",
+  "budget": "$40,000/month",
+  "availability": "99.9%",
+  "cloud": "",
+  "constraints": "Edits must converge to the same final document for everyone regardless of order/network timing; no data loss on a brief disconnect",
+  "provider": "ollama"
+}

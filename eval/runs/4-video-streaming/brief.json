@@ -1,0 +1,10 @@
+{
+  "idea": "A video platform - creators upload video (VOD) or go live, viewers watch on any device/network quality worldwide, video must adapt to the viewer's bandwidth.",
+  "users": "Creators, viewers, platform ops",
+  "traffic": "5,000 concurrent live streams at peak, 2 million concurrent VOD viewers, global audience",
+  "budget": "$200,000/month",
+  "availability": "99.9% for VOD, 99.95% for live",
+  "cloud": "",
+  "constraints": "Adaptive bitrate required; live latency target under 10 seconds glass-to-glass",
+  "provider": "ollama"
+}

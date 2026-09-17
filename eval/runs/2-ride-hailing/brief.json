@@ -1,0 +1,10 @@
+{
+  "idea": "A ride-hailing dispatch platform - riders request a ride, available drivers get matched by proximity, trip runs with live location tracking, pricing adjusts with demand.",
+  "users": "Riders, drivers, ops/support",
+  "traffic": "2 million rides/day, 150,000 concurrent active trips at peak in a city",
+  "budget": "$120,000/month",
+  "availability": "99.95%",
+  "cloud": "",
+  "constraints": "Driver locations update every 3-5 seconds; the matching decision must complete in under 2 seconds",
+  "provider": "ollama"
+}

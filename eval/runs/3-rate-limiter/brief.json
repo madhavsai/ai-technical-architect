@@ -1,0 +1,10 @@
+{
+  "idea": "A rate-limiting layer for a multi-tenant API platform - every tenant gets a configurable requests-per-minute quota, enforced consistently across many stateless API gateway nodes, with per-endpoint override limits.",
+  "users": "Platform tenants (API consumers), platform ops",
+  "traffic": "500,000 requests/sec across all tenants, thousands of tenants",
+  "budget": "$15,000/month",
+  "availability": "99.99%",
+  "cloud": "",
+  "constraints": "A rate-limit decision must add under 5ms p99 latency; must not become the single point of failure for the whole platform",
+  "provider": "ollama"
+}
